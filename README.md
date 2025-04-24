@@ -4,7 +4,7 @@ This Repo will provide sample docker file which can be used to build Conda , Pyt
 
 First way of building images using BASH script.
 
-build.sh script is used to create required runtime.
+./interactive_build.sh script is used to create required runtime.
 
 Example:
 
