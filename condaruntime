@@ -1,0 +1,28 @@
+#define build argument for ubi version
+ARG IMAGE=ubi8
+
+#define build argument for conda install script file
+FROM registry.access.redhat.com/${IMAGE}/ubi-minimal
+ARG CONDAINSTALLFILE="Miniconda3-latest.sh"
+
+#install required utilities (wget, bzip2, etc.)
+RUN microdnf install -y \
+    wget \
+    bzip2 \
+    gcc \
+    make \
+    && microdnf clean all
+
+#copy and install Miniconda
+COPY ${CONDAINSTALLFILE} .
+RUN bash ${CONDAINSTALLFILE} -b -f -p /opt/conda \
+    && rm ${CONDAINSTALLFILE}
+
+#set up Conda environment
+ENV PATH="/opt/conda/bin:${PATH}"
+
+#verify the Conda installation
+RUN conda --version
+
+#set the default command to show Conda info
+CMD ["conda", "info"]

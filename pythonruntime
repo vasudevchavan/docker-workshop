@@ -1,0 +1,40 @@
+#set Arguments
+ARG BASEIMAGE=ubi9
+
+#use the UBI 9 Minimal base image
+FROM registry.access.redhat.com/${BASEIMAGE}/ubi-minimal
+
+#install necessary build dependencies
+ARG PYTHON_VERSION=3.10.10
+ARG SHORT_PYTHON_VERSION=3.10
+
+ENV PYTHON_INSTALL_PATH=/opt/python
+
+RUN microdnf install -y \
+        gcc \
+        make \
+        wget \
+        openssl-devel \
+        gzip \
+        tar \
+        bzip2-devel \
+        libffi-devel \
+        zlib-devel \
+        && microdnf clean all
+
+#download and install Python 3.10
+RUN mkdir -p ${PYTHON_INSTALL_PATH} && \
+    cd /tmp && \
+    wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
+    tar -xzf Python-${PYTHON_VERSION}.tgz -C ${PYTHON_INSTALL_PATH} && \
+    cd ${PYTHON_INSTALL_PATH}/Python-${PYTHON_VERSION} && \
+    ./configure --enable-optimizations --prefix=${PYTHON_INSTALL_PATH} && \
+    make altinstall && \
+    cd /tmp && \
+    rm -rf Python-${PYTHON_VERSION}.tgz ${PYTHON_INSTALL_PATH}/Python-${PYTHON_VERSION}
+
+#ensure pip is installed
+RUN python${SHORT_PYTHON_VERSION} -m ensurepip --upgrade
+
+#set default command to python3.10
+CMD ["python${SHORT_PYTHON_VERSION}"]
