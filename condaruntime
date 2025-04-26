@@ -3,20 +3,30 @@ ARG IMAGE=ubi8
 
 #define build argument for conda install script file
 FROM registry.access.redhat.com/${IMAGE}/ubi-minimal
-ARG CONDAINSTALLFILE="Miniconda3-latest.sh"
+ARG CONDA_VERSION
+ARG TARGETARCH
 
 #install required utilities (wget, bzip2, etc.)
 RUN microdnf install -y \
     wget \
+    tar \
+    glibc \
     bzip2 \
     gcc \
     make \
     && microdnf clean all
 
 #copy and install Miniconda
-COPY ${CONDAINSTALLFILE} .
-RUN bash ${CONDAINSTALLFILE} -b -f -p /opt/conda \
-    && rm ${CONDAINSTALLFILE}
+RUN mkdir -p /opt/conda && chmod 777 /opt/conda &&  \
+    base_url="https://repo.anaconda.com/miniconda/" && \
+    condaInstallFile=$(wget -qO- "$base_url" | \
+        grep -o 'href="[^"]\+\.sh"' | \
+        sed 's/^href="//; s/"$//' | \
+        grep -i "${CONDA_VERSION}-Linux-${TARGETARCH}" | head -n 1) && \
+    echo "Downloading Linux installer: ${base_url}${condaInstallFile}" && \
+    wget "${base_url}${condaInstallFile}" && \
+    bash ${condaInstallFile} -b -f -p /opt/conda && \
+    rm ${condaInstallFile}
 
 #set up Conda environment
 ENV PATH="/opt/conda/bin:${PATH}"

@@ -1,14 +1,15 @@
 #set Arguments
-ARG BASEIMAGE=ubi9
+ARG IMAGE=ubi8
 
 #use the UBI 9 Minimal base image
-FROM registry.access.redhat.com/${BASEIMAGE}/ubi-minimal
+FROM registry.access.redhat.com/${IMAGE}/ubi-minimal
 
 #install necessary build dependencies
-ARG PYTHON_VERSION=3.10.10
-ARG SHORT_PYTHON_VERSION=3.10
+ARG PYTHON_VERSION
 
 ENV PYTHON_INSTALL_PATH=/opt/python
+ENV PATH="${PATH}:${PYTHON_INSTALL_PATH}/bin:${PYTHON_INSTALL_PATH}/lib/python${PYTHON_VERSION%.*}/site-packages"
+
 
 RUN microdnf install -y \
         gcc \
@@ -22,19 +23,20 @@ RUN microdnf install -y \
         zlib-devel \
         && microdnf clean all
 
-#download and install Python 3.10
+#download and install Python
 RUN mkdir -p ${PYTHON_INSTALL_PATH} && \
     cd /tmp && \
     wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
     tar -xzf Python-${PYTHON_VERSION}.tgz -C ${PYTHON_INSTALL_PATH} && \
     cd ${PYTHON_INSTALL_PATH}/Python-${PYTHON_VERSION} && \
     ./configure --enable-optimizations --prefix=${PYTHON_INSTALL_PATH} && \
-    make altinstall && \
+    make -j"$(nproc)" altinstall && \
+    ln -s /opt/python/bin/python${PYTHON_VERSION%.*} /usr/local/bin/python${PYTHON_VERSION%.*} && \
     cd /tmp && \
     rm -rf Python-${PYTHON_VERSION}.tgz ${PYTHON_INSTALL_PATH}/Python-${PYTHON_VERSION}
 
 #ensure pip is installed
-RUN python${SHORT_PYTHON_VERSION} -m ensurepip --upgrade
+RUN python${PYTHON_VERSION%.*} -m ensurepip --upgrade
 
 #set default command to python3.10
-CMD ["python${SHORT_PYTHON_VERSION}"]
+CMD ["python${PYTHON_VERSION%.*}"]

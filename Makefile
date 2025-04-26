@@ -1,42 +1,66 @@
 #Makefile
 
-# Default values (can be overridden via CLI)
-OS ?= ubi8
-RUNTIME ?= python
-VERSION ?= latest
-
-# Architecture detection (used in shell script)
-ARCH := $(shell uname -m)
-
-.PHONY: all help build-python build-conda build-go clean
-
-all: help
-
+.PHONY: all go python conda clean
+# Default target
+all:
+	docker buildx bake all
+go:
+	docker buildx bake gobuild
+python:
+	docker buildx bake pythonbuild
+conda:
+	docker buildx bake condabuild --push
+push_individual:
+	docker buildx bake all --push
+multiarch_all:
+	docker buildx bake multiarch --push
 help:
 	@echo "Usage:"
-	@echo "  make build-conda OS=ubi9 VERSION=latest"
-	@echo "  make build-python OS=ubi8 VERSION=3.10.10"
-	@echo "  make build-go OS=ubi9 VERSION=1.24.2"
+	@echo "  make                     # builds all groups"
+	@echo "  make go                  # builds Go targets only"
+	@echo "  make python              # builds Python targets only"
+	@echo "  make push_individual     # builds all groups and push to registry"
+	@echo "  make multiarch_all       # builds multiarch for all and push to registry"
 	@echo ""
-	@echo "Environment variables which are passed as docker arguments:"
-	@echo "  OS         - RHEL base (ubi8 or ubi9)"
 
 
-# Python
-build-python:
-	@echo "Building Python image with OS=$(OS), VERSION=$(VERSION)"
-	@./non_interactive_build.sh --runtime=python --version=$(VERSION) --os=$(OS)
 
-# Conda
-build-conda:
-	@echo "Building Conda image with OS=$(OS), VERSION=$(VERSION)"
-	@./non_interactive_build.sh --runtime=conda --version=$(VERSION) --os=$(OS)
 
-# Go
-build-go:
-	@echo "Building Go image with OS=$(OS), VERSION=$(VERSION)"
-	@./non_interactive_build.sh --runtime=go --version=$(VERSION) --os=$(OS)
+# Same Makefile with Arguments
+# Default values (can be overridden at runtime)
+# GROUP = ["go","python","conda"]
+# PUSH = ["true","false"]
+# DEBUG = ["true","false"]
+# IMAGE = ["ubi8","ubi9"]
+#
+GROUP      ?= all
+PUSH       ?= false
+DEBUG      ?= false
+IMAGE      ?= ubi9
+GO_VERSION ?= 1.24.2
+PYTHON_VERSION ?= 3.10.10
+CONDA_VERSION  ?= latest
+
+# Common args passed to bake
+BAKE_ARGS = --set *.args.IMAGE=$(IMAGE) \
+            --set gobase.args.GO_VERSION=$(GO_VERSION) \
+            --set pythonbase.args.PYTHON_VERSION=$(PYTHON_VERSION) \
+            --set condabase.args.CONDA_VERSION=$(CONDA_VERSION)
+
+# Conditional options
+ifeq ($(PUSH),true)
+	BAKE_ARGS += --push
+endif
+ifeq ($(DEBUG),true)
+	BAKE_ARGS += --progress=plain --no-cache
+endif
+
+bake:
+	docker buildx bake $(GROUP) $(BAKE_ARGS)
+push:
+	@$(MAKE) bake PUSH=true
+debug:
+	@$(MAKE) bake DEBUG=true
 
 clean:
-	@echo "Cleaning up generated installer scripts..."
-	rm -f Miniconda3-*.sh
+	docker builder prune -f

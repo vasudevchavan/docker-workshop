@@ -3,8 +3,8 @@ ARG IMAGE=ubi9
 
 #define go version to used
 FROM registry.access.redhat.com/${IMAGE}/ubi-minimal
-ARG GO_VERSION="1.20.5"
-ARG GOLANGARCH="x86_64"
+ARG GO_VERSION
+ARG TARGETARCH
 
 #install necessary tools (wget, tar, and other dependencies)
 RUN microdnf install -y \
@@ -15,10 +15,10 @@ RUN microdnf install -y \
     && microdnf clean all
 
 #download and install Go
-RUN echo ${GO_VERSION} ${GOLANGARCH} \ 
-    && wget https://golang.org/dl/go${GO_VERSION}.linux-${GOLANGARCH}.tar.gz \
-    && tar -C /usr/local -xzf go${GO_VERSION}.linux-${GOLANGARCH}.tar.gz \
-    && rm go${GO_VERSION}.linux-${GOLANGARCH}.tar.gz
+RUN echo ${GO_VERSION} ${TARGETARCH} \
+    && wget https://golang.org/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
+    && tar -C /usr/local -xzf go${GO_VERSION}.linux-${TARGETARCH}.tar.gz \
+    && rm go${GO_VERSION}.linux-${TARGETARCH}.tar.gz
 
 #set up Go environment variables
 ENV PATH="/usr/local/go/bin:${PATH}"
