@@ -68,3 +68,8 @@ OS         - RHEL base (ubi8 or ubi9)
 |condaruntime	|Multi-arch not supported	|❌ Not Supported|
 |goruntime	| Requires Go source code validation	|✅ Supported|
 |pythonruntime	|Requires Python source validation	|✅ Supported|
+
+To simplify our build process and reduce the complexity of maintaining separate shell scripts and Makefiles,
+we are transitioning to Docker Bake—a recently introduced capability that offers a more structured and scalable approach to managing Docker builds.
+
+phase2 Branch will have these changes.
