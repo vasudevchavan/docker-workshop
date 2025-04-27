@@ -10,25 +10,32 @@ python:
 	docker buildx bake pythonbuild
 conda:
 	docker buildx bake condabuild --push
-push_individual:
+push_all:
 	docker buildx bake all --push
 multiarch_all:
 	docker buildx bake multiarch --push
 help:
 	@echo "Usage:"
+	@echo "============================================================================="
 	@echo "  make                     # builds all groups"
 	@echo "  make go                  # builds Go targets only"
 	@echo "  make python              # builds Python targets only"
-	@echo "  make push_individual     # builds all groups and push to registry"
+	@echo "  make push_all            # builds all groups and push to registry"
 	@echo "  make multiarch_all       # builds multiarch for all and push to registry"
-	@echo ""
+	@echo "============================================================================="
+	@echo "  Environment Variable"
+	@echo "  GROUP = ["all","go","python","conda"]"
+	@echo "  PUSH = ["true","false"]"
+	@echo "  DEBUG = ["true","false"]"
+	@echo "  IMAGE = ["ubi8","ubi9"]"
+	@echo "============================================================================="
 
 
 
 
 # Same Makefile with Arguments
 # Default values (can be overridden at runtime)
-# GROUP = ["go","python","conda"]
+# GROUP = ["all","go","python","conda"]
 # PUSH = ["true","false"]
 # DEBUG = ["true","false"]
 # IMAGE = ["ubi8","ubi9"]
